@@ -4,5 +4,5 @@
 портативный Python, зависимости в .venv, cloudflared в ./bin.
 """
 
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 APP_NAME = "GlassMCP"

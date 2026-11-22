@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>GlassMCP — панель управления</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15h-.5A2.5 2.5 0 0 1 2 12.5v-8A2.5 2.5 0 0 1 4.5 2h8A2.5 2.5 0 0 1 15 4.5V5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M22 18.5A2.5 2.5 0 0 1 19.5 21h-15A2.5 2.5 0 0 1 2 18.5v-13A2.5 2.5 0 0 1 4.5 3H9l2.5 3h8A2.5 2.5 0 0 1 22 8.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 4v6h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.5 13a8.5 8.5 0 1 1-2-7.5L21 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M18 13v5.5A2.5 2.5 0 0 1 15.5 21h-9A2.5 2.5 0 0 1 4 18.5v-9A2.5 2.5 0 0 1 6.5 7H12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 4h6v6M20 4l-9 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+
+<div id="reconnect" class="net-overlay" role="alert" hidden>
+  <div class="net-box">
+    <span class="spinner" aria-hidden="true"></span>
+    <span id="reconnect-text">Соединение с панелью потеряно, переподключение…</span>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-dot" aria-hidden="true"></span>
+    <h1 class="brand-name">GlassMCP</h1>
+  </div>
+  <div class="pill" id="server-pill">
+    <span class="pill-dot" id="pill-dot" aria-hidden="true"></span>
+    <span id="pill-text">Подключение…</span>
+  </div>
+</header>
+
+<main class="grid">
+
+  <section class="card" id="card-status" aria-labelledby="h-status">
+    <h2 class="sec-title" id="h-status">Статус</h2>
+    <div class="status-head">
+      <span class="big-dot idle" id="status-dot" aria-hidden="true"></span>
+      <div class="status-main">
+        <div class="status-title" id="status-title">Подключение…</div>
+        <div class="muted small" id="status-uptime">—</div>
+      </div>
+      <span class="badge badge-ver mono" id="status-version" hidden></span>
+    </div>
+    <div class="mode-line" id="status-mode"></div>
+    <div class="kv">
+      <span class="kv-l">MCP URL</span>
+      <code class="mono kv-v" id="status-url">—</code>
+      <button type="button" class="icon-btn" data-copy-el="status-url" aria-label="Скопировать MCP URL" title="Скопировать"><svg class="ic" aria-hidden="true"><use href="#i-copy"></use></svg></button>
+    </div>
+    <div class="kv"><span class="kv-l">Инструментов</span><span class="kv-v" id="status-tools">—</span></div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-ghost" id="btn-restart"><svg class="ic" aria-hidden="true"><use href="#i-refresh"></use></svg>Перезапустить сервер</button>
+    </div>
+  </section>
+
+  <section class="card" id="card-tunnel" aria-labelledby="h-tunnel">
+    <h2 class="sec-title" id="h-tunnel">Туннель</h2>
+    <div class="status-head">
+      <span class="big-dot idle" id="tunnel-dot" aria-hidden="true"></span>
+      <div class="status-main">
+        <div class="status-title" id="tunnel-title">Не подключён</div>
+        <div class="muted small" id="tunnel-sub"></div>
+      </div>
+    </div>
+    <div class="kv" id="tunnel-url-row" hidden>
+      <span class="kv-l">Публичный URL</span>
+      <code class="mono kv-v" id="tunnel-url">—</code>
+      <button type="button" class="icon-btn" data-copy-el="tunnel-url" aria-label="Скопировать публичный URL" title="Скопировать"><svg class="ic" aria-hidden="true"><use href="#i-copy"></use></svg></button>
+    </div>
+    <div class="wait-line" id="tunnel-wait" hidden><span class="mini-dot" aria-hidden="true"></span><span>получаем адрес…</span></div>
+    <div class="alert alert-warn small" id="tunnel-dead" hidden></div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-primary" id="btn-tunnel-start"><svg class="ic" aria-hidden="true"><use href="#i-link"></use></svg>Подключить туннель</button>
+      <button type="button" class="btn btn-ghost" id="btn-tunnel-stop" disabled>Отключить</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btn-tunnel-check" disabled>Проверить</button>
+    </div>
+    <p class="hint muted small">Cloudflare-туннель — временный адрес вида <code>*.trycloudflare.com</code>: ничего не нужно пробрасывать, но он меняется при каждом подключении. Постоянный адрес — ниже, в секции «Свой адрес».</p>
+  </section>
+
+  <section class="card" id="card-public" aria-labelledby="h-public">
+    <h2 class="sec-title" id="h-public">Свой адрес (IP / домен)</h2>
+    <div class="status-head">
+      <span class="big-dot idle" id="public-dot" aria-hidden="true"></span>
+      <div class="status-main">
+        <div class="status-title" id="public-title">Не задан</div>
+        <div class="muted small" id="public-sub"></div>
+      </div>
+    </div>
+    <div class="kv" id="public-url-row" hidden>
+      <span class="kv-l">Адрес для клиентов</span>
+      <code class="mono kv-v" id="public-url">—</code>
+      <button type="button" class="icon-btn" data-copy-el="public-url" aria-label="Скопировать свой адрес" title="Скопировать"><svg class="ic" aria-hidden="true"><use href="#i-copy"></use></svg></button>
+    </div>
+    <div class="field">
+      <label class="f-label" for="public-input">Постоянный адрес, по которому сервер уже доступен снаружи</label>
+      <div class="tag-add">
+        <input class="input mono" id="public-input" type="text" placeholder="mcp.example.com или http://1.2.3.4:8000" autocomplete="off" spellcheck="false" aria-label="Свой IP или домен">
+        <button type="button" class="btn btn-primary btn-sm" id="btn-public-save">Сохранить</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-public-clear" disabled>Удалить</button>
+      </div>
+      <p class="muted small">Например <code>mcp.example.com</code> или <code>http://203.0.113.5:8000</code>. Схема подставится сама: <code>http://</code> для IP, <code>https://</code> для домена.</p>
+    </div>
+    <p class="hint muted small">Это только запись адреса для клиентов: GlassMCP сам не пробрасывает порты и не выпускает сертификат. Подходит, если сервер уже доступен извне — проброшен порт на роутере, свой прокси, VPS или ngrok. Если адрес задан, «Подключение» показывает его вместо туннельного URL.</p>
+  </section>
+
+  <section class="card" id="card-workdir" aria-labelledby="h-workdir">
+    <h2 class="sec-title" id="h-workdir">Рабочая папка</h2>
+    <div id="workdir-body"><p class="muted small">—</p></div>
+  </section>
+
+  <section class="card span2" id="card-settings" aria-labelledby="h-settings">
+    <h2 class="sec-title" id="h-settings">Настройки</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label class="f-label" for="set-maxfile">Макс. размер файла, МБ</label>
+        <input class="input mono" id="set-maxfile" type="text" inputmode="decimal" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label class="f-label" for="set-maxout">Макс. длина вывода, символов</label>
+        <input class="input mono" id="set-maxout" type="text" inputmode="numeric" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label class="f-label" for="set-tdef">Таймаут shell по умолчанию, сек</label>
+        <input class="input mono" id="set-tdef" type="text" inputmode="numeric" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label class="f-label" for="set-tmax">Макс. таймаут shell, сек</label>
+        <input class="input mono" id="set-tmax" type="text" inputmode="numeric" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <div class="field">
+      <span class="f-label" id="allowed-label">Разрешённые папки (без запроса подтверждения)</span>
+      <div class="tags" id="allowed-tags" aria-labelledby="allowed-label"></div>
+      <div class="tag-add">
+        <input class="input mono" id="allowed-input" type="text" placeholder="/путь/к/папке" autocomplete="off" spellcheck="false" aria-label="Новый разрешённый путь">
+        <button type="button" class="btn btn-ghost btn-sm" id="allowed-add"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg>Добавить</button>
+      </div>
+      <p class="muted small" id="allowed-note"></p>
+    </div>
+    <div class="field">
+      <label class="f-label" for="deny-patterns">Запрещённые шаблоны (по одному на строку)</label>
+      <textarea class="input mono" id="deny-patterns" rows="3" spellcheck="false" autocomplete="off"></textarea>
+    </div>
+    <div class="field">
+      <label class="f-label" for="deny-paths">Запрещённые пути (по одному на строку)</label>
+      <textarea class="input mono" id="deny-paths" rows="3" spellcheck="false" autocomplete="off"></textarea>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-primary" id="btn-save">Сохранить настройки</button>
+    </div>
+    <div class="divider" role="presentation"></div>
+    <div class="field">
+      <span class="f-label">Токен доступа</span>
+      <div class="token-row">
+        <code class="mono" id="token-val">—</code>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-token-show">Показать</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-token-copy" hidden>Копировать</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-token-regen">Сгенерировать новый</button>
+      </div>
+      <p class="muted small">Клиент передаёт его в заголовке <code>Authorization: Bearer</code></p>
+    </div>
+  </section>
+
+  <section class="card" id="card-zones" aria-labelledby="h-zones">
+    <h2 class="sec-title" id="h-zones">Зоны</h2>
+    <div id="zones-body"><p class="muted small">—</p></div>
+  </section>
+
+  <section class="card" id="card-audit" aria-labelledby="h-audit">
+    <h2 class="sec-title" id="h-audit">Аудит</h2>
+    <div class="toolbar">
+      <input class="input" id="audit-filter" type="text" placeholder="Фильтр по подстроке…" autocomplete="off" spellcheck="false" aria-label="Фильтр журнала аудита">
+      <label class="switch"><input type="checkbox" id="audit-auto" class="sr-only"><span class="switch-track" aria-hidden="true"></span><span class="switch-label">Автообновление</span></label>
+    </div>
+    <div class="audit-list mono" id="audit-list"><p class="muted">—</p></div>
+  </section>
+
+  <section class="card" id="card-logs" aria-labelledby="h-logs">
+    <h2 class="sec-title" id="h-logs">Логи сервера</h2>
+    <div class="toolbar">
+      <label class="switch"><input type="checkbox" id="logs-auto" class="sr-only"><span class="switch-track" aria-hidden="true"></span><span class="switch-label">Автообновление</span></label>
+    </div>
+    <pre class="logs-pre mono" id="logs-pre">—</pre>
+  </section>
+
+  <section class="card span2" id="card-connect" aria-labelledby="h-connect">
+    <h2 class="sec-title" id="h-connect">Подключение</h2>
+    <p class="muted small conn-sub">URL + /mcp</p>
+    <div class="alert alert-warn" id="conn-warn" hidden>Ни туннель, ни свой адрес не заданы — MCP доступен только с этого ПК. Подними туннель или впиши постоянный адрес в секции выше.</div>
+    <div class="tabs" role="tablist" aria-label="Инструкции для клиентов" id="conn-tabs">
+      <button type="button" class="tab" role="tab" id="tab-general" data-tab="general" aria-selected="true" aria-controls="conn-panel" tabindex="0">Общие</button>
+      <button type="button" class="tab" role="tab" id="tab-chatco" data-tab="chatco" aria-selected="false" aria-controls="conn-panel" tabindex="-1">chat.co</button>
+      <button type="button" class="tab" role="tab" id="tab-claude" data-tab="claude" aria-selected="false" aria-controls="conn-panel" tabindex="-1">Claude</button>
+      <button type="button" class="tab" role="tab" id="tab-chatgpt" data-tab="chatgpt" aria-selected="false" aria-controls="conn-panel" tabindex="-1">ChatGPT</button>
+      <button type="button" class="tab" role="tab" id="tab-zcode" data-tab="zcode" aria-selected="false" aria-controls="conn-panel" tabindex="-1">ZCode</button>
+      <button type="button" class="tab" role="tab" id="tab-cursor" data-tab="cursor" aria-selected="false" aria-controls="conn-panel" tabindex="-1">Курсор и другие</button>
+      <span class="tab-underline" id="tab-underline" aria-hidden="true"></span>
+    </div>
+    <div class="conn-panel" id="conn-panel" role="tabpanel" aria-labelledby="tab-general" tabindex="0"><p class="muted">Загрузка…</p></div>
+  </section>
+
+</main>
+
+<div class="modal-backdrop" id="modal-confirm" role="dialog" aria-modal="true" aria-labelledby="mc-title" hidden>
+  <div class="modal">
+    <h3 class="modal-title" id="mc-title">Подтверждение</h3>
+    <p class="modal-text" id="mc-text"></p>
+    <div class="btn-row end">
+      <button type="button" class="btn btn-ghost" id="mc-cancel">Отмена</button>
+      <button type="button" class="btn btn-danger" id="mc-ok">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-folder" role="dialog" aria-modal="true" aria-labelledby="mf-title" hidden>
+  <div class="modal modal-lg">
+    <div class="modal-head">
+      <h3 class="modal-title" id="mf-title">Выбор рабочей папки</h3>
+      <button type="button" class="icon-btn" id="mf-close" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
+    </div>
+    <p class="modal-sub" id="mf-sub" hidden></p>
+    <nav class="crumbs mono" id="fp-crumbs" aria-label="Хлебные крошки"></nav>
+    <div class="fp-list" id="fp-list" aria-label="Список папок"></div>
+    <div class="field">
+      <label class="f-label" for="fp-input">Путь вручную</label>
+      <div class="tag-add">
+        <input class="input mono" id="fp-input" type="text" placeholder="/Users/…" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn btn-ghost" id="fp-apply">Применить</button>
+      </div>
+    </div>
+    <div class="btn-row end">
+      <button type="button" class="btn btn-danger-ghost" id="fp-reset" disabled>Сбросить (полный доступ)</button>
+      <button type="button" class="btn btn-primary" id="fp-choose">Выбрать эту папку</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-token" role="dialog" aria-modal="true" aria-labelledby="mt-title" hidden>
+  <div class="modal">
+    <h3 class="modal-title" id="mt-title">Новый токен создан</h3>
+    <p class="modal-text">Скопируйте токен сейчас — после закрытия окна видна только маска.</p>
+    <div class="token-big">
+      <code class="mono" id="mt-token">—</code>
+      <button type="button" class="icon-btn" data-copy-el="mt-token" aria-label="Скопировать токен" title="Скопировать"><svg class="ic" aria-hidden="true"><use href="#i-copy"></use></svg></button>
+    </div>
+    <div class="alert alert-warn"><strong>Клиенты, у которых старый токен, отключатся.</strong></div>
+    <div class="btn-row end">
+      <button type="button" class="btn btn-primary" id="mt-close">Готово</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>

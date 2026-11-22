@@ -1,0 +1,22 @@
+# Секреты и локальное состояние — никогда не наружу
+.env
+config.yaml
+approved_zones.json
+audit.log
+
+# Логи
+logs/
+
+# Артефакты, которые лаунчер скачивает сам (портативные, не в git)
+python/
+.venv/
+bin/
+.pydl/
+
+# Системное / редакторы
+.DS_Store
+.zcode/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/

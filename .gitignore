@@ -3,6 +3,8 @@
 config.yaml
 approved_zones.json
 audit.log
+.server_pid
+.tunnel_pid
 
 # Логи
 logs/

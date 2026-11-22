@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import re
 import subprocess
@@ -317,10 +318,17 @@ async def api_tunnel_stop(request: Request) -> JSONResponse:
 
 
 async def api_tunnel_check(request: Request) -> JSONResponse:
-    """Разовая живая проверка: стучимся на публичный URL /health."""
+    """Разовая живая проверка: стучимся на публичный URL /health.
+
+    ВАЖНО: сам /health обслуживает ЭТОТ же процесс. Если делать urllib
+    прямо в обработчике, asyncio-цикл встанет, запрос из Cloudflare не
+    получит ответ — read timeout и «туннель не отвечает» при живом
+    туннеле. Поэтому проверка уходит в рабочий поток.
+    """
     if not tunnel.MANAGER.url:
         return _err("туннель не запущен — проверять нечего")
-    return _json({"ok": True, "probe": tunnel.MANAGER.probe_now()})
+    probe = await asyncio.to_thread(tunnel.MANAGER.probe_now)
+    return _json({"ok": True, "probe": probe})
 
 
 async def api_browse(request: Request) -> JSONResponse:

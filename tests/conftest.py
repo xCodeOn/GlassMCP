@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import threading
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,27 @@ sys.path.insert(0, str(APP_DIR))
 from server import config as cfg_mod  # noqa: E402
 from server import guard  # noqa: E402
 from server import zones  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def isolated_tunnel(tmp_path, monkeypatch):
+    """Тесты не должны видеть реальный рантайм: MANAGER при импорте делает
+    reattach() по живым .tunnel_pid и logs/cloudflared.log. Если запущен
+    сервер с туннелем, статус «tunnel_running» протекал бы в тесты —
+    обнуляем состояние менеджера на время каждого теста."""
+    from server import tunnel as tmod
+    monkeypatch.setattr(tmod, "PID_FILE", tmp_path / ".tunnel_pid")
+    monkeypatch.setattr(tmod, "LOG_PATH", tmp_path / "cloudflared.log")
+    m = tmod.MANAGER
+    m._probe_stop.set()  # заглушить фоновый probe-поток, поднятый на импорте
+    monkeypatch.setattr(m, "proc", None, raising=False)
+    for attr, val in (("attached_pid", None), ("url", ""), ("error", ""),
+                      ("starting", False), ("mode", "quick"),
+                      ("_url_thread", None), ("_probe_thread", None)):
+        monkeypatch.setattr(m, attr, val)
+    monkeypatch.setattr(m, "probe", tmod.TunnelManager._new_probe())
+    monkeypatch.setattr(m, "_probe_stop", threading.Event())
+    yield
 
 
 @pytest.fixture()

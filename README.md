@@ -15,7 +15,7 @@
 |---|---|---|
 | **macOS** | `Start-MacOS.command` (двойной клик) или `./run.sh` | `Ctrl+C` в окне с сервером; для `--bg` — `./stop.sh` |
 | **Linux** | `./Start-Linux.sh` или `./run.sh` | `Ctrl+C` в окне с сервером; для `--bg` — `./stop.sh` |
-| **Windows** | `Start-Windows.bat` (двойной клик) | `Stop-Windows.bat` |
+| **Windows** | `Start-Windows.bat` (двойной клик) | заверши процесс python в Диспетчере задач (pid — в `.server_pid`) |
 
 По умолчанию сервер запускается **в этой же консоли**: логи идут в
 терминал, а `Ctrl+C` аккуратно останавливает сервер и туннель.
@@ -137,7 +137,7 @@ URL туннеля.
 ```
 APP/
 ├── Start-MacOS.command / Start-Linux.sh / Start-Windows.bat   — запуск
-├── stop.sh / Stop-Windows.bat                — остановка фонового режима (--bg)
+├── stop.sh                                   — остановка фонового режима (--bg)
 ├── run.sh / stop.sh                        — движок запуска/остановки (macOS/Linux)
 ├── config.yaml                             — настройки (правится панелью)
 ├── .env                                    — токен (MCP_TOKEN=...)

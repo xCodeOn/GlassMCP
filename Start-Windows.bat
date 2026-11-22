@@ -70,5 +70,5 @@ if "%WANT_TUNNEL%"=="1" (
 start "" "http://127.0.0.1:%DASH_PORT%"
 echo GlassMCP started:  panel http://127.0.0.1:%DASH_PORT%  ^•  MCP http://127.0.0.1:%MCP_PORT%/mcp
 if "%WANT_TUNNEL%"=="1" echo tunnel: URL will appear in the panel within ~30 s
-echo stop: Stop-Windows.bat
+echo stop: kill python in Task Manager, pid in .server_pid
 endlocal
